@@ -8,7 +8,7 @@ Stable tag: 2.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Login to WordPress using credentials stored in your Active Directory, OpenLDAP and other LDAP Servers for sites hosted in your IntraNet.
+Login to your intranet wordpress site using credentials stored in AD, OpenLDAP and other LDAP. No need to have public IP address for LDAP server.
 
 == Description ==
 
@@ -24,6 +24,9 @@ LDAP/AD Login Plugin provides login to WordPress using credentials stored in you
 *	Test connection to your LDAP server
 *	Test authentication using credentials stored in your LDAP server
 *	Ability to test against demo LDAP server and demo credentials
+*	You will need to install PHP LDAP extension in WordPress
+*	No need for a public IP address or FQDN for your LDAP. 
+*	Will get support if you contact miniOrange at info@miniorange.com
 
 = Do you want support? =
 Please email us at info@miniorange.com or <a href="http://miniorange.com/contact" target="_blank">Contact us</a>
