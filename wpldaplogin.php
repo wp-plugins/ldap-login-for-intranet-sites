@@ -56,7 +56,7 @@
 				
 				//Send request to miniOrange if enabled
 			    if(get_option('mo_ldap_local_enable_log_requests') == true){
-					$request_type = "User Login through LDAP";
+					$request_type = "User Login through LDAP Intranet";
 					$status_message = "Successful Authentication";
 					$mo_ldap_config->send_audit_request($username, $request_type, $status, $status_message);		
 				}
@@ -99,8 +99,8 @@
 				$error->add('curl_error', __('<strong>ERROR</strong>: <a target="_blank" href="http://php.net/manual/en/ldap.installation.php">PHP LDAP extension</a> is not installed or disabled. Please enable it.'));
 				
 				if(get_option('mo_ldap_local_enable_log_requests') == true){
-					$request_type = "User Login through LDAP";
-					$status_message = "LDAP Error";
+					$request_type = "User Login through LDAP Intranet";
+					$status_message = "LDAP extension not installed.";
 					$mo_ldap_config->send_audit_request($username, $request_type, $status, $status_message);
 				}
 				
@@ -108,20 +108,13 @@
 			} else if($status == 'CURL_ERROR'){
 				$error = new WP_Error();
 				$error->add('curl_error', __('<strong>ERROR</strong>: <a href="http://php.net/manual/en/curl.installation.php">PHP cURL extension</a> is not installed or disabled.'));
-				
-				if(get_option('mo_ldap_local_enable_log_requests') == true){
-					$request_type = "User Login through LDAP";
-					$status_message = "cURL Error";
-					$mo_ldap_config->send_audit_request($username, $request_type, $status, $status_message);
-				}
-				
 				return $error;
 			} else {
 				$error = new WP_Error();
 				$error->add('incorrect_credentials', __('<strong>ERROR</strong>: Invalid username or incorrect password. Please try again.'));
 				
 				if(get_option('mo_ldap_local_enable_log_requests') == true){
-					$request_type = "User Login through LDAP";
+					$request_type = "User Login through LDAP Intranet";
 					$status_message = "Incorrect Credentials";
 					$mo_ldap_config->send_audit_request($username, $request_type, $status, $status_message);
 				}
@@ -323,16 +316,30 @@
 					$response = json_decode( $content, true );
 					if(strcasecmp($response['statusCode'], 'SUCCESS') == 0) {
 						add_option( 'mo_ldap_local_message', $message . ' Connection was established successfully. Please test authentication to verify LDAP User Mapping Configuration.', '', 'no');
+						$audit_message = "Test was successful.";
 						$this->show_success_message();
 					} else if(strcasecmp($response['statusCode'], 'ERROR') == 0) {
 						add_option( 'mo_ldap_local_message', $response['statusMessage'], '', 'no' );
+						$audit_message = "Invalid search filter or search base.";
 						$this->show_error_message();
 					} else if( strcasecmp( $response['statusCode'], 'LDAP_ERROR') == 0) {
 						add_option( 'mo_ldap_local_message', $response['statusMessage'], '', 'no');
+						$audit_message = "LDAP extension not installed.";
+						$this->show_error_message();
+					} else if( strcasecmp( $response['statusCode'], 'PING_ERROR') == 0) {
+						add_option( 'mo_ldap_local_message', $response['statusMessage'], '', 'no');
+						$audit_message = "Ping server failed ".$server_name;
 						$this->show_error_message();
 					} else {
 						add_option( 'mo_ldap_local_message', $message . ' There was an error in connecting with the current settings. Make sure you have entered server url in format ldap://domain.com:port. Test using Ping LDAP Server.', '', 'no');
+						$audit_message = "Invalid configuration.";
 						$this->show_error_message();
+					}
+					
+					//log status if enabled
+					if(get_option('mo_ldap_local_enable_log_requests') == true){
+						$request_type = "Test Intranet LDAP Connection";
+						$mo_ldap_config->send_audit_request(null, $request_type, $response, $audit_message);
 					}
 				}
 				else if( $_POST['option'] == "mo_ldap_local_test_auth" ) {		//test authentication with current settings
@@ -386,7 +393,7 @@
 					}
 					//Send request if enabled
 					if(get_option('mo_ldap_local_enable_log_requests') == true){
-						$request_type = "Test Authentication";
+						$request_type = "Test User Login Intranet";
 						$mo_ldap_config->send_audit_request($test_username, $request_type, $response['statusCode'], $response['statusMessage']);
 					}
 				}
@@ -487,23 +494,25 @@
 					$response = $mo_ldap_config->ping_ldap_server($ldap_server_url);
 					if(strcasecmp($response, 'SUCCESS') == 0){
 						$status_message = "Successfully contacted LDAP Server";
+						$audit_message = "Successfully contacted LDAP Server ".$ldap_server_url;
 						add_option('mo_ldap_local_message', $status_message, '', 'no');
 						$this->show_success_message();
 					} else if(strcasecmp($response, 'LDAP_ERROR') == 0){
 						$status_message = "<a target='_blank' href='http://php.net/manual/en/ldap.installation.php'>PHP LDAP extension</a> is not installed or disabled. Please enable it.";
+						$audit_message = "LDAP extension not installed for server ".$ldap_server_url;
 						add_option('mo_ldap_local_message', 'LDAP Extension is disabled: ' . $status_message, '', 'no');
 						$this->show_error_message();
 					} else{
 						$status_message = " Please check your LDAP server address is correct e.g. <b>ldap://server_address:389</b> and if there is a firewall, please open the firewall to allow incoming requests to your LDAP from your wordpress IP and port 389.";
+						$audit_message = "Error connecing server ".$ldap_server_url;
 						add_option('mo_ldap_local_message', 'Error contacting LDAP Server: ' . $status_message, '', 'no');
 						$this->show_error_message();
 					}
 					
-					//Send request to miniOrange if enabled
+					//log status if enabled
 					if(get_option('mo_ldap_local_enable_log_requests') == true){
-						$username = null;
-						$request_type = "Ping LDAP Server";
-						$mo_ldap_config->send_audit_request($username, $request_type, $response, $status_message);
+						$request_type = "Ping Intranet LDAP Server";
+						$mo_ldap_config->send_audit_request(null, $request_type, $response, $audit_message);
 					}
 
 				}

@@ -8,14 +8,9 @@ function mo_ldap_local_settings() {
 		$active_tab = 'default';
 	}
 	
-	if (Mo_Ldap_Local_Util::is_customer_registered())
-		if( isset($_POST['option']) && ($_POST['option'] == "mo_ldap_local_verify_customer" || 
-				$_POST['option'] == "mo_ldap_local_register_customer") ){
-			$active_tab = 'default';
-		}
 	
 	?>
-	<h2>miniOrange LDAP/AD Login for IntraNet Sites</h2>
+	<h2>miniOrange LDAP/AD Login for Intranet Sites</h2>
 	<?php
 		if(!Mo_Ldap_Local_Util::is_curl_installed()) {
 			?>
@@ -191,7 +186,15 @@ function mo_ldap_local_account_page() {
 					<br/>
 					<p><a target="_blank" href="<?php echo get_option('mo_ldap_local_host_name') . "/moas/idp/userforgotpassword"; ?>">Click here</a> if you forgot your password to your miniOrange account.</p>
 				</div>
-			</div> <?php
+			</div> 
+			
+			<?php
+			if( isset($_POST['option']) && ($_POST['option'] == "mo_ldap_local_verify_customer" ||
+					$_POST['option'] == "mo_ldap_local_register_customer") ){ ?>
+				<script>
+					window.location.href = "<?php echo add_query_arg( array('tab' => 'default'), $_SERVER['REQUEST_URI'] ); ?>";
+				</script>
+			<?php }
 }
 /* End of Account for customer*/
 

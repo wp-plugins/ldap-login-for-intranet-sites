@@ -33,7 +33,7 @@ class Mo_Ldap_Local_Config{
 		$customer_id = get_option('mo_ldap_local_admin_customer_key');
 		$application_name = $_SERVER['SERVER_NAME'];
 		$admin_email = get_option('mo_ldap_local_admin_email');
-		$app_type = 'WP Local LDAP Login Plugin';
+		$app_type = 'WP LDAP/AD Login for Intranet Sites';
 		$request_type = 'Ping LDAP Server';
 		
 		$ldapconn = ldap_connect($ldap_server_url);
@@ -148,7 +148,7 @@ class Mo_Ldap_Local_Config{
 			$server_name = get_option('mo_ldap_local_server_url') ? Mo_Ldap_Local_Util::decrypt(get_option('mo_ldap_local_server_url')) : '';
 			$pingResult = $this->ping_ldap_server($server_name);
 			if($pingResult=='ERROR')
-				return json_encode(array("statusCode"=>'ERROR','statusMessage'=>$error . 'Can not connect to LDAP Server. Make sure you have entered server url in format <b>ldap://server_address:port</b> and if there is a firewall, please open the firewall to allow incoming requests to your LDAP from your wordpress IP and port 389. Also check troubleshooting or contact us using support below.'));
+				return json_encode(array("statusCode"=>'PING_ERROR','statusMessage'=>$error . 'Can not connect to LDAP Server. Make sure you have entered server url in format <b>ldap://server_address:port</b> and if there is a firewall, please open the firewall to allow incoming requests to your LDAP from your wordpress IP and port 389. Also check troubleshooting or contact us using support below.'));
 
 			$ldapconn = $this->getConnection();
 			if ($ldapconn) {
@@ -259,7 +259,7 @@ class Mo_Ldap_Local_Config{
 			$admin_ldap_password = get_option( 'mo_ldap_local_server_password');
 			$dn_attribute = get_option( 'mo_ldap_local_dn_attribute');
 			$search_base = get_option( 'mo_ldap_local_search_base');
-			$search_filter = get_option( 'mo_ldap_search_filter');
+			$search_filter = get_option( 'mo_ldap_local_search_filter');
 			$username = get_option('mo_ldap_local_admin_email');
 		}
 		$customer_id = get_option('mo_ldap_local_admin_customer_key') ? get_option('mo_ldap_local_admin_customer_key') : null;
@@ -308,6 +308,10 @@ class Mo_Ldap_Local_Config{
 	
 	function send_audit_request($username, $request_type, $status_code, $status_message){
 		
+		if(!Mo_Ldap_Local_Util::is_curl_installed()) {
+			return "CURL_ERROR";
+		}
+		
 		if($request_type == "Ping LDAP Server"){
 			$username = get_option('mo_ldap_local_admin_email');
 		}
@@ -322,7 +326,7 @@ class Mo_Ldap_Local_Config{
 			'ldapAuditRequest' => array(
 				'endUserEmail' => $username,
 				'applicationName' => $_SERVER['SERVER_NAME'],
-				'appType' => 'WP LDAP Local Login Plugin',
+				'appType' => 'WP LDAP/AD Login for Intranet Sites',
 				'requestType' => $request_type,
 				'statusCode' => $status_code,
 				'statusMessage' => $status_message
